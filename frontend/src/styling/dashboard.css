@@ -1,0 +1,16 @@
+.dashboard-div{
+	display: flex;
+	flex-wrap: wrap;
+}
+
+.dashboard-div-card{
+	margin-top: 25px;
+	margin-right: 25px;
+	height: 150px;
+	width: 250px;
+	background-color: var(--second-color);
+}
+
+.dashboard-div-card h2{
+	text-align: center;
+}

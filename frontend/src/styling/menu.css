@@ -1,5 +1,5 @@
 .navigation-div{
-	background-color: #A91079;
+	background-color: var(--third-color);
 	height: 6vh;
 	display: flex;
 }
@@ -20,5 +20,5 @@
 }
 
 .navigation-div-button:hover{
-	background-color: #F806CC;
+	background-color: var(--fourth-color);
 }

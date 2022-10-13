@@ -1,6 +1,5 @@
 import React from 'react';
-import '../styling/main.css';
-import '../styling/dashboard.css';
+import './dashboard.css';
 
 var test_data = {
   "servers": [

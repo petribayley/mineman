@@ -1,11 +1,7 @@
 .navigation-div{
-	background-color: var(--third-color);
+	background-color: var(--charlie-color);
 	height: 6vh;
 	display: flex;
-}
-
-.navigation-div-logo{
-	height: 100%;
 }
 
 .navigation-div-button{
@@ -20,5 +16,10 @@
 }
 
 .navigation-div-button:hover{
-	background-color: var(--fourth-color);
+	background-color: var(--delta-color);
+}
+
+.navigation-div-logo{
+	height: '100%';
+	filter: var(--alpha-color-filter);
 }

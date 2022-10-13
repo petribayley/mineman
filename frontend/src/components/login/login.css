@@ -1,0 +1,29 @@
+.login-box{
+	background-color: var(--beta-color);
+	width: 500px;
+	margin: 65px auto;
+	border-radius: 4px;
+	box-shadow: 0 2px 25px rgba(0, 0, 0, 0.2);
+	padding: 50px;
+	justify-content: center;
+	text-align: center;
+}
+
+.login-box button{
+	padding: 8px 50px;
+}
+
+.input-div{
+	padding: 10px;
+	margin: 20px;
+}
+
+.input-div label{
+	margin-right: 15px;
+	font-size: large
+}
+
+.input-div input{
+	padding: 10px 5px;
+	border-color: var(--alpha-color);
+}

@@ -4,7 +4,8 @@
   "description": "Backend for the mineman application",
   "main": "index.js",
   "scripts": {
-    "start": "node index.js"
+    "start": "node index.js",
+    "test": "nodemon index.js"
   },
   "type": "module",
   "author": "Petri Bayley (petribayley@gmail.com)",

@@ -1,35 +1,15 @@
 import React from 'react'
 import * as HTCF from 'hex-to-css-filter'
+import Cookies from 'js-cookie';
 import Menu from './menu/menu.js'
 import Dashboard from './dashboard/dashboard.js'
 import Login from './login/login.js'
 import palettes from './colourPalettes.js'
 import './app.css'
 
-function getCookie(cname) {
-  let name = cname + "=";
-  let decodedCookie = decodeURIComponent(document.cookie);
-  let ca = decodedCookie.split(';');
-  for(let i = 0; i <ca.length; i++) {
-    let c = ca[i];
-    while (c.charAt(0) === ' ') {
-      c = c.substring(1);
-    }
-    if (c.indexOf(name) === 0) {
-      return c.substring(name.length, c.length);
-    }
-  }
-  return '';
-}
-
 export default class App extends React.Component {
-  constructor(props) {
-    super(props)
-    this.state = {
-      isApiAlive: false,
-      apiVersion: '0',
-      isApiAliveInterval: setInterval(() => {
-        fetch('http://localhost:3001/api/isalive', {
+  checkApiState() {
+    fetch('http://localhost:3001/api/v1/isalive', {
           method: 'POST',
           headers: {'Content-Type': 'application/json'},
           body: JSON.stringify({})
@@ -37,24 +17,47 @@ export default class App extends React.Component {
         .then(res => res.json())
         .then(data => this.setState({isApiAlive: true}))
         .catch(err => this.setState({isApiAlive: false}))
-      }, 10000)
+  }
+
+  constructor(props) {
+    super(props)
+    this.state = {
+      isApiAlive: false,
+      apiVersion: '0',
+      sessionValid: false,
+      selectedPage: 'dashboard'
     }
+    this.checkApiState()
+    this.checkSession()
   }
 
   componentWillUnmount(){
-    clearInterval(this.state.isApiAliveInterval)
   }
 
   checkSession() {
-    // document.cookie = "username=John Doe; expires=Thu, 18 Dec 2013 12:00:00 UTC";
-
-    var session = getCookie('userSession')
-    
-    if(session === '') {
+    if(Cookies.get('cookieUUID') === '') {
       console.log('(SessionTracker) No session cookie found.')
       return false
     }
-    return false
+    var session = JSON.parse(Cookies.get('cookieUUID'))
+    fetch('http://localhost:3001/api/v1/account/session', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({cookieUUID: session.cookie})
+    })
+    .then(res => res.json())
+    .then(jsonRaw => {
+      const json = JSON.parse(jsonRaw)
+      if(json.success && json.data.valid)
+        this.setState({sessionValid: true})
+      else
+        this.setState({sessionValid: false})
+    })
+    .catch(err => console.log(err))
+  }
+
+  setPage( pageString ) {
+    this.setState({selectedPage: pageString})
   }
 
   render() {
@@ -76,14 +79,7 @@ export default class App extends React.Component {
 
     return (
       <div id='app_root' style={paletteVars}>
-        {this.checkSession() ? (
-          <Menu />
-          ) : (
-          <>
-            <Login />
-          </>
-          )
-        }
+        {this.state.isApiAlive ? (this.state.sessionValid ? (<Menu handler = {this.setPage.bind(this)} />) : (<Login handler = {this.checkSession.bind(this)} />)) : (<>No Connection</>)}
       </div>
     )
   }

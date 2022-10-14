@@ -1,20 +1,47 @@
 import React from 'react';
 import './login.css'
 
+function setCookie(cname, cvalue, exdays) {
+  const d = new Date();
+  d.setTime(d.getTime() + (exdays*24*60*60*1000));
+  let expires = "expires="+ d.toUTCString();
+  document.cookie = cname + "=" + cvalue + ";" + expires + ";path=/";
+}
+
 export default class Login extends React.Component {
   constructor(props) {
     super(props)
 
     this.state = {
       username: '',
-      password: ''
+      password: '',
+      submitLoading: false
     }
 
     this.handleSubmit = this.handleSubmit.bind(this)
   }
 
   handleSubmit( e ) {
-    console.log(this.state)
+    this.setState({submitLoading: true})
+    fetch('http://localhost:3001/api/v1/account/login', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify(
+        {
+          username: this.state.username,
+          password: this.state.password
+        }
+        )
+    })
+    .then(res => res.json())
+    .then(json => {
+      var jsonParsed = JSON.parse(json)
+      this.setState({submitLoading: false})
+      if(jsonParsed.success === true) {
+        setCookie('cookieUUID', JSON.stringify({cookie:jsonParsed.data.cookieUUID, username: this.state.username}), 365)
+        this.props.handler()
+      }
+    })
   }
 
   render() {
@@ -30,7 +57,17 @@ export default class Login extends React.Component {
           <label for='password'>Password</label>
           <input type='password' id='password' onChange={e => this.setState({password: e.target.value})} />
         </div>
-        <button type='button' onClick={this.handleSubmit}>Login</button>
+        {!this.state.submitLoading ? (
+          <button type='button' onClick={this.handleSubmit}>Login</button>
+          ) : (
+          <>
+            <div className="spinner-container">
+              <div className="loading-spinner">
+              </div>
+            </div>
+          </>
+          )
+        }
       </div>
     )
   }

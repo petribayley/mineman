@@ -9,7 +9,7 @@ import './app.css'
 
 export default class App extends React.Component {
   checkApiState() {
-    fetch('http://localhost:3001/api/v1/isalive', {
+    fetch('http://localhost/api/v1/isalive', {
           method: 'POST',
           headers: {'Content-Type': 'application/json'},
           body: JSON.stringify({})
@@ -40,7 +40,7 @@ export default class App extends React.Component {
       return false
     }
     var session = JSON.parse(Cookies.get('cookieUUID'))
-    fetch('http://localhost:3001/api/v1/account/session', {
+    fetch('http://localhost/api/v1/account/session', {
       method: 'POST',
       headers: {'Content-Type': 'application/json'},
       body: JSON.stringify({cookieUUID: session.cookie})

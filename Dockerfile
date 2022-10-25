@@ -13,18 +13,11 @@ RUN \
 RUN \
 	addgroup -g 101 -S nginx && \
 	adduser -S -D -H -u 101 -h /var/cache/nginx -s /sbin/nologin -G nginx -g nginx nginx
-# PostgresSQL user
-RUN \
-	addgroup -g 70 -S postgres && \
-	adduser -u 70 -S -D -G postgres -H -h /var/lib/postgresql -s /bin/sh postgres && \
-	mkdir -p /var/lib/postgresql && \
-	chown -R postgres:postgres /var/lib/postgresql
 
 # Update APK
 RUN \
 	apk update && \
-	apk add --no-cache python3 gcc g++ make wget linux-headers gpg gpg-agent libstdc++ postgresql nginx su-exec
-
+	apk add --no-cache python3 wget gpg gpg-agent libstdc++ nginx su-exec
 # Download Node
 RUN \
 	mkdir -p mm_setup/node && \
@@ -32,15 +25,6 @@ RUN \
 	wget https://unofficial-builds.nodejs.org/download/release/v${NODE_VERSION}/node-v${NODE_VERSION}-${DISTRO}-musl.tar.gz && \
 	wget https://unofficial-builds.nodejs.org/download/release/v${NODE_VERSION}/SHASUMS256.txt && \
 	grep node-v${NODE_VERSION}-${DISTRO}-musl.tar.gz SHASUMS256.txt | sha256sum -c -
-
-# Setup PostgreSQL
-VOLUME /var/lib/postgresql/data
-RUN \
-	mkdir /run/postgresql && \
-	chown -R postgres:postgres /run/postgresql
-USER postgres
-RUN initdb -D /var/lib/postgresql/data
-USER root
 
 # Setup Node
 FROM base as base-node
@@ -73,7 +57,11 @@ RUN npm ci
 USER root
 WORKDIR /
 
-COPY nginx.conf /etc/nginx/nginx.conf
-COPY mineman_route.conf /etc/nginx/conf.d/mineman_route.conf
-COPY ./start_service.sh /start_service.sh
+COPY backend/nginx.conf /etc/nginx/nginx.conf
+COPY backend/mineman_route.conf /etc/nginx/conf.d/mineman_route.conf
+COPY backend/start_service.sh /start_service.sh
+COPY backend/wait /wait
+RUN chmod +x /wait
+
+STOPSIGNAL SIGINT
 CMD ["/bin/sh", "/start_service.sh"]

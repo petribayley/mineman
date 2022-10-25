@@ -3,24 +3,23 @@ import * as Crypto from 'crypto'
 import * as Database from './db.js'
 
 const router = express.Router()
-router.post('/login', (req, res, next) => {
+router.post('/login', async (req, res, next) => {
 	
 	// Get data from request
 	const username = req.body.username
 	const password = req.body.password
 
-	const user = Database.getUser(username)
-	if(user.success === false) { 
+	const user = await Database.getUser(username)
+	if(user === undefined) { 
 		res.status(500).json(JSON.stringify({data: 'Internal Server Error', success: false}))
 		console.log(user)
 		return
 	}
-
-	if(user.data !== undefined && user.data.password === password) {
+	if(user[0].password === password) {
 
 		var cookieUUID = Crypto.randomUUID().toString();
 
-		var insertSession = Database.insertSession(username, cookieUUID)
+		var insertSession = Database.insertSession(user[0].id, cookieUUID)
 
 		if(insertSession.success === false) {
 			res.status(500).json(JSON.stringify({data: 'Internal Server Error', success: false}))
@@ -45,17 +44,17 @@ router.post('/login', (req, res, next) => {
 	))
 })
 
-router.post('/session', (req, res) => {
+router.post('/session', async (req, res) => {
 	// Get data from request
 	const cookieUUID = req.body.cookieUUID
 
-	var checkSession = Database.getSession(cookieUUID)
-	if(checkSession.success === false) {
+	var checkSession = await Database.getSession(cookieUUID)
+	console.log(checkSession)
+	if(checkSession === undefined) {
 		rres.status(500).json(JSON.stringify({data: 'Internal Server Error', success: false}))
-		console.log(checkSession)
 		return
 	}
-	if(checkSession.data !== undefined) {
+	if(checkSession.length > 0) {
 		res.json(JSON.stringify(
 			{
 				data: {cookieUUID: cookieUUID, valid: true},

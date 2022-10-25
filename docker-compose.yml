@@ -1,7 +1,48 @@
 version: '3.9'
 services:
-        mineman:
-                build:
-                        context: .
-                        dockerfile: Dockerfile
-                
+    mineman_db:
+        image: mysql:8.0
+        restart: always
+        environment:
+            MYSQL_DATABASE: 'mineman'
+            MYSQL_USER: 'mineman_node'
+            MYSQL_PASSWORD: 'testpass'
+            MYSQL_ROOT_PASSWORD: 'testpass'
+        volumes:
+            - mineman-db-vol:/var/lib/mysql
+            - './sql_db_init/:/docker-entrypoint-initdb.d'
+        networks:
+            backend_connection:
+                ipv4_address: 172.23.0.3
+    mineman:
+        build:
+            context: .
+            dockerfile: Dockerfile
+        environment:
+            MYSQL_DATABASE: 'mineman'
+            MYSQL_USER: 'root'
+            MYSQL_PASSWORD: 'testpass'
+            MYSQL_HOST: '172.23.0.3'
+            WAIT_HOSTS: mineman_db:3306
+        depends_on:
+            - mineman_db
+        ports:
+            - 80:80
+            - 443:443
+        networks:
+            backend_connection:
+                ipv4_address: 172.23.0.2
+
+volumes:
+    mineman-db-vol:
+
+networks:
+    frontend_connection:
+        name: frontend_connection
+        driver: bridge
+    backend_connection:
+        ipam:
+            driver: default
+            config:
+                - subnet: "172.23.0.0/24"
+                  gateway: "172.23.0.1"

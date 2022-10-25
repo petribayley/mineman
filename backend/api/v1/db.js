@@ -1,48 +1,27 @@
-import * as pg from 'pg'
-
-const { Pool } = pg.default
+import * as mysql from 'mysql2/promise'
 
 var database
 
-function initilaiseDatabase() {
+async function initilaiseDatabase() {
 	try {
 		// Create Database
-		database = new Pool({
-		  host: '127.0.0.1',
-		  port: 5432,
-		  user: 'node',
-		  password: '',
-		})
-		database.connect()
-		const createUserTable = database.query(`
-			CREATE TABLE IF NOT EXISTS USER
-			(
-			username TEXT NOT NULL,
-			password TEXT NOT NULL,
-			PRIMARY KEY(username)
-			)
-		`)
-		const createUserSessionTable = database.query(`
-			CREATE TABLE IF NOT EXISTS USER_SESSION
-			(
-			uuid TEXT NOT NULL,
-			username TEXT NOT NULL,
-			timeCreated DATE NOT NULL,
-			PRIMARY KEY(uuid),
-			FOREIGN KEY(username) REFERENCES USER(username)
-			)
-		`)
-		}
+		database = await mysql.createConnection({
+		  host     : process.env.MYSQL_HOST,
+		  user     : process.env.MYSQL_USER,
+		  password : process.env.MYSQL_PASSWORD,
+		  database : process.env.MYSQL_DATABASE
+		});
+	}
 	catch(err) {
 		console.log(err)
 	}
 }
 
-initilaiseDatabase()
+await initilaiseDatabase()
 
 // Queries
 const getUserQuery = `
-	SELECT username, password
+	SELECT id, username, password
 	FROM USER
 	WHERE username = ?
 `
@@ -53,9 +32,9 @@ const countUserQuery = `
 `
 
 const getSessionQuery = `
-	SELECT username, timeCreated
-	FROM USER_SESSION
-	WHERE uuid = ?
+	SELECT u.username, us.timeCreated
+	FROM USER_SESSION as us, USER as u
+	WHERE uuid = ? AND u.id = us.user_id
 `
 
 const insertUserQuery = `
@@ -74,7 +53,7 @@ const insertUserQuery = `
 const insertSessionQuery = `
 	INSERT INTO USER_SESSION
 	(
-		username,
+		user_id,
 		uuid,
 		timeCreated
 	)
@@ -86,44 +65,27 @@ const insertSessionQuery = `
 	)
 `
 
-function getQuery(query, ...args) {
-	var ret
-	try {
-		ret = query.get(...args)
-	}
-	catch(err) {
-		return {data: err.message, success: false, query: query}
-	}
-	return {data: ret, success: true}
+export async function getUser(username) {
+	const [rows, fields] = await database.execute(getUserQuery, [username])
+	return rows
 }
 
-function runQuery(query, ...args) {
-	var ret
-	try {
-		ret = query.run(...args)
-	}
-	catch(err) {
-		return {data: err.message, success: false, query: query}
-	}
-	return {data: ret, success: true}
+export async function insertUser(username, password) {
+	const [rows, fields] = await database.execute(insertUserQuery, [username, password])
+	return rows
 }
 
-export function getUser(username) {
-	return getQuery(getUserQuery, username)
+export async function getUserCount() {
+	const [rows, fields] = await database.execute(countUserQuery)
+	return rows
 }
 
-export function insertUser(username, password) {
-	return runQuery(insertUserQuery, username, password)
+export async function insertSession(username, uuid) {
+	const [rows, fields] = await database.execute(insertSessionQuery, [username, uuid])
+	return rows
 }
 
-export function getUserCount() {
-	return getQuery(countUserQuery)
-}
-
-export function insertSession(username, uuid) {
-	return runQuery(insertSessionQuery, username, uuid)
-}
-
-export function getSession(uuid) {
-	return getQuery(getSessionQuery, uuid)
+export async function getSession(uuid) {
+	const [rows, fields] = await database.execute(getSessionQuery, [uuid])
+	return rows
 }
